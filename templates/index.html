@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container { max-width: 800px; }
+        .tab-content { margin-top: 20px; }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .message.user {
+            background-color: #e9ecef;
+        }
+
+        .message.assistant {
+            background-color: #d4edda;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+        }
+
+        /* Стили для форм входа и регистрации */
+        .auth-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-form h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .auth-form button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .auth-form button:hover {
+            background: #0056b3;
+        }
+
+        .auth-links {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .auth-links a {
+            color: #007bff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .user-menu {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+        }
+
+        .user-menu button {
+            padding: 0.5rem 1rem;
+            margin-left: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .settings-button {
+            background: #28a745;
+            color: white;
+        }
+
+        .logout-button {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Меню пользователя -->
+    <div class="user-menu">
+        <span id="username-display" style="display: none;"></span>
+        <button id="settings-button" class="settings-button" style="display: none;">Settings</button>
+        <button id="logout-button" class="logout-button" style="display: none;">Logout</button>
+        <button id="login-button" class="login-button">Login</button>
+        <button id="register-button" class="register-button">Register</button>
+    </div>
+
+    <!-- Форма входа -->
+    <div id="login-form" class="auth-container">
+        <div class="auth-form">
+            <h2>Login</h2>
+            <input type="text" id="login-username" placeholder="Username" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button onclick="login()">Login</button>
+            <div class="auth-links">
+                <a onclick="showRegisterForm()">Don't have an account? Register</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма регистрации -->
+    <div id="register-form" class="auth-container">
+        <div class="auth-form">
+            <h2>Register</h2>
+            <input type="text" id="register-username" placeholder="Username" required>
+            <input type="email" id="register-email" placeholder="Email" required>
+            <input type="password" id="register-password" placeholder="Password" required>
+            <input type="password" id="register-confirm-password" placeholder="Confirm Password" required>
+            <button onclick="register()">Register</button>
+            <div class="auth-links">
+                <a onclick="showLoginForm()">Already have an account? Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма настроек -->
+    <div id="settings-form" class="auth-container">
+        <div class="auth-form">
+            <h2>Settings</h2>
+            <div>
+                <label>
+                    <input type="checkbox" id="rag-enabled"> Enable RAG
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" id="fine-tuning-enabled"> Enable Fine-tuning
+                </label>
+            </div>
+            <div>
+                <label>Theme:</label>
+                <select id="theme-select">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <button onclick="saveSettings()">Save Settings</button>
+            <button onclick="hideSettingsForm()" style="background: #6c757d; margin-top: 0.5rem;">Cancel</button>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Claude AI Assistant</h1>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="finetune-tab" data-bs-toggle="tab" data-bs-target="#finetune" type="button">Fine-tuning</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rag-tab" data-bs-toggle="tab" data-bs-target="#rag" type="button">RAG</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button">Hybrid Chat</button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="myTabContent">
+            <!-- Fine-tuning Tab -->
+            <div class="tab-pane fade show active" id="finetune">
+                <h3>Fine-tuning Mode</h3>
+                <form id="uploadForm" class="mt-4">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Upload Training Data (CSV/JSON)</label>
+                        <input type="file" class="form-control" id="file" accept=".csv,.json">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Start Fine-tuning</button>
+                </form>
+                <div id="results" class="mt-4"></div>
+            </div>
+
+            <!-- RAG Tab -->
+            <div class="tab-pane fade" id="rag" role="tabpanel">
+                <div class="container mt-4">
+                    <h2>Knowledge Base Management</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Upload Documents</h5>
+                                    <form id="documentForm">
+                                        <div class="mb-3">
+                                            <label for="documents" class="form-label">Select Documents</label>
+                                            <input type="file" class="form-control" id="documents" name="documents" multiple>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" onclick="uploadDocuments()">Upload</button>
+                                        <button type="button" class="btn btn-danger" onclick="clearKnowledgeBase()">Clear Knowledge Base</button>
+                                    </form>
+                                    <div id="uploadStatus" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Test Query</h5>
+                                    <form id="queryForm">
+                                        <div class="mb-3">
+                                            <label for="query" class="form-label">Enter Query</label>
+                                            <input type="text" class="form-control" id="query" name="query">
+                                        </div>
+                                        <button type="button" class="btn btn-primary" onclick="submitQuery()">Submit Query</button>
+                                    </form>
+                                    <div id="answer" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hybrid Chat Tab -->
+            <div class="tab-pane fade" id="chat" role="tabpanel">
+                <div class="container mt-4">
+                    <h2>Hybrid Chat</h2>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="chat-messages" class="mb-3" style="height: 400px; overflow-y: auto;">
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="chat-input" class="form-control" placeholder="Type your message...">
+                                        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Settings</h5>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="use-rag" checked>
+                                        <label class="form-check-label" for="use-rag">
+                                            Use RAG (Knowledge Base)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="use-fine-tune" checked>
+                                        <label class="form-check-label" for="use-fine-tune">
+                                            Use Fine-tuned Model
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chat Functions -->
+    <script>
+        let sessionId = null;
+
+        function initChat() {
+            sessionId = crypto.randomUUID();
+            document.getElementById('chat-messages').innerHTML = '';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim();
+            if (!query) return;
+            
+            const useRag = document.getElementById('use-rag').checked;
+            const useFineTune = document.getElementById('use-fine-tune').checked;
+            
+            appendMessage('user', query);
+            input.value = '';
+            
+            appendMessage('system', 'Claude is thinking...');
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    query: query,
+                    session_id: sessionId,
+                    use_rag: useRag,
+                    use_fine_tune: useFineTune
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                removeLastMessage();
+                
+                if (data.success) {
+                    if (data.session_id) {
+                        sessionId = data.session_id;
+                    }
+                    
+                    let answer = data.answer;
+                    
+                    let components = [];
+                    if (data.used_rag) components.push('RAG');
+                    if (data.used_fine_tune) components.push('Fine-tuning');
+                    
+                    if (components.length > 0) {
+                        answer += '\n\n[Using: ' + components.join(', ') + ']';
+                    }
+                    
+                    if (data.sources && data.sources.length > 0) {
+                        answer += '\n\nSources:\n' + data.sources.join('\n');
+                    }
+                    
+                    appendMessage('assistant', answer);
+                } else {
+                    appendMessage('error', data.error || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                removeLastMessage();
+                appendMessage('error', 'Error: ' + error.message);
+            });
+        }
+
+        function appendMessage(type, content) {
+            const messages = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `message ${type} mb-2`;
+            
+            let html = '';
+            if (type === 'user') {
+                html = `<strong>You:</strong> ${content}`;
+            } else if (type === 'assistant') {
+                html = `<strong>Claude:</strong> ${formatMessage(content)}`;
+            } else if (type === 'system') {
+                html = `<em>${content}</em>`;
+            } else {
+                html = `<strong>Error:</strong> ${content}`;
+            }
+            
+            div.innerHTML = html;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function removeLastMessage() {
+            const messages = document.getElementById('chat-messages');
+            if (messages.lastChild) {
+                messages.removeChild(messages.lastChild);
+            }
+        }
+
+        function formatMessage(content) {
+            return content.replace(/\n/g, '<br>');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initChat();
+            
+            document.getElementById('chat-input')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+
+    <!-- RAG Functions -->
+    <script>
+        function uploadDocuments() {
+            const formData = new FormData();
+            const files = document.getElementById('documents').files;
+            const statusDiv = document.getElementById('uploadStatus');
+            
+            if (files.length === 0) {
+                statusDiv.innerHTML = '<div class="alert alert-warning">Please select files to upload</div>';
+                return;
+            }
+
+            statusDiv.innerHTML = '<div class="alert alert-info">Uploading documents...</div>';
+            
+            for (let file of files) {
+                formData.append('documents', file);
+            }
+
+            fetch('/upload_documents', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    statusDiv.innerHTML = '<div class="alert alert-success">Documents uploaded successfully!</div>';
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                console.error('Error:', error);
+            });
+        }
+
+        function clearKnowledgeBase() {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="alert alert-info">Clearing knowledge base...</div>';
+            
+            fetch('/clear_kb', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    statusDiv.innerHTML = '<div class="alert alert-success">Knowledge base cleared successfully!</div>';
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                console.error('Error:', error);
+            });
+        }
+
+        function submitQuery() {
+            const query = document.getElementById('query').value.trim();
+            const answerDiv = document.getElementById('answer');
+            
+            if (!query) {
+                answerDiv.innerHTML = '<div class="alert alert-warning">Please enter a query</div>';
+                return;
+            }
+
+            answerDiv.innerHTML = '<div class="alert alert-info">Processing query...</div>';
+
+            fetch('/rag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    answerDiv.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
+                } else {
+                    let html = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Answer</h5>
+                                <p class="card-text">${result.answer}</p>
+                                <h6 class="mt-3">Sources:</h6>
+                                <ul class="list-group list-group-flush">
+                                    ${result.sources.map(source => `
+                                        <li class="list-group-item">
+                                            <strong>${source.title}</strong> (Score: ${source.score.toFixed(2)})<br>
+                                            ${source.content.substring(0, 200)}...
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    answerDiv.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                answerDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                console.error('Error:', error);
+            });
+        }
+    </script>
+
+    <!-- Функции для работы с пользователями -->
+    <script>
+        function showLoginForm() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'flex';
+        }
+
+        function showRegisterForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'flex';
+        }
+
+        function showSettingsForm() {
+            document.getElementById('settings-form').style.display = 'flex';
+            loadUserSettings();
+        }
+
+        function hideSettingsForm() {
+            document.getElementById('settings-form').style.display = 'none';
+        }
+
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Скрываем форму входа
+                    document.getElementById('login-form').style.display = 'none';
+                    
+                    // Обновляем UI
+                    updateUserInterface(data.user);
+                    
+                    // Загружаем историю чата
+                    loadChatHistory();
+                } else {
+                    alert(data.error || 'Login failed');
+                }
+            } catch (error) {
+                alert('Error during login');
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    showLoginForm();
+                } else {
+                    alert(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                alert('Error during registration');
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // Очищаем UI
+                    updateUserInterface(null);
+                    // Очищаем чат
+                    clearChat();
+                }
+            } catch (error) {
+                alert('Error during logout');
+            }
+        }
+
+        async function loadUserSettings() {
+            try {
+                const response = await fetch('/user/settings');
+                const settings = await response.json();
+
+                // Обновляем форму настроек
+                document.getElementById('rag-enabled').checked = settings.rag_enabled;
+                document.getElementById('fine-tuning-enabled').checked = settings.fine_tuning_enabled;
+                document.getElementById('theme-select').value = settings.theme;
+            } catch (error) {
+                alert('Error loading settings');
+            }
+        }
+
+        async function saveSettings() {
+            const settings = {
+                rag_enabled: document.getElementById('rag-enabled').checked,
+                fine_tuning_enabled: document.getElementById('fine-tuning-enabled').checked,
+                theme: document.getElementById('theme-select').value
+            };
+
+            try {
+                const response = await fetch('/user/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                if (response.ok) {
+                    hideSettingsForm();
+                    // Применяем новые настройки
+                    applySettings(settings);
+                } else {
+                    alert('Failed to save settings');
+                }
+            } catch (error) {
+                alert('Error saving settings');
+            }
+        }
+
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/user/history');
+                const history = await response.json();
+
+                // Очищаем текущий чат
+                clearChat();
+
+                // Добавляем сообщения из истории
+                history.forEach(message => {
+                    addMessageToChat(message.content, message.role === 'user', message.metadata);
+                });
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function updateUserInterface(user) {
+            const loginButton = document.getElementById('login-button');
+            const registerButton = document.getElementById('register-button');
+            const logoutButton = document.getElementById('logout-button');
+            const settingsButton = document.getElementById('settings-button');
+            const usernameDisplay = document.getElementById('username-display');
+
+            if (user) {
+                // Пользователь вошел
+                loginButton.style.display = 'none';
+                registerButton.style.display = 'none';
+                logoutButton.style.display = 'inline-block';
+                settingsButton.style.display = 'inline-block';
+                usernameDisplay.style.display = 'inline';
+                usernameDisplay.textContent = user.username;
+
+                // Применяем настройки пользователя
+                applySettings(user.settings);
+            } else {
+                // Пользователь вышел
+                loginButton.style.display = 'inline-block';
+                registerButton.style.display = 'inline-block';
+                logoutButton.style.display = 'none';
+                settingsButton.style.display = 'none';
+                usernameDisplay.style.display = 'none';
+            }
+        }
+
+        function applySettings(settings) {
+            // Применяем тему
+            document.body.className = settings.theme;
+            
+            // Обновляем состояние компонентов RAG и Fine-tuning
+            updateComponentStates(settings);
+        }
+
+        // Инициализация обработчиков событий
+        document.getElementById('login-button').addEventListener('click', showLoginForm);
+        document.getElementById('register-button').addEventListener('click', showRegisterForm);
+        document.getElementById('logout-button').addEventListener('click', logout);
+        document.getElementById('settings-button').addEventListener('click', showSettingsForm);
+
+        // Закрытие форм при клике вне них
+        document.querySelectorAll('.auth-container').forEach(container => {
+            container.addEventListener('click', (e) => {
+                if (e.target === container) {
+                    container.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

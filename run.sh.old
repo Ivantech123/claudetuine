@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo "Installing dependencies..."
+pip install -r requirements.txt
+
+echo "Starting Streamlit app..."
+streamlit run streamlit_app.py

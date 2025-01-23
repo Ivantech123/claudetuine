@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .error-message {
+            color: #dc3545;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .success-message {
+            color: #198754;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .password-field {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #6c757d;
+        }
+        .toggle-password:hover {
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Claude AI Assistant</a>
+            <div class="d-flex">
+                <span id="userStatus" class="text-light me-3" style="display: none;">
+                    Welcome, <span id="userName"></span>!
+                </span>
+                <div id="authButtons">
+                    <button id="loginBtn" class="btn btn-outline-light me-2" type="button" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+                    <button id="registerBtn" class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
+                </div>
+                <button id="logoutBtn" class="btn btn-outline-light" style="display: none;" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Fine-tuning</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Upload your documents for fine-tuning</p>
+                        <form id="finetuneForm">
+                            <input type="file" class="form-control mb-2" id="finetuneFiles" multiple>
+                            <div class="error-message" id="finetuneError"></div>
+                            <div class="success-message" id="finetuneSuccess"></div>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">RAG</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <p>Upload documents for RAG</p>
+                            <form id="ragUploadForm" class="mb-3">
+                                <input type="file" class="form-control mb-2" id="ragFiles" multiple>
+                                <div class="error-message" id="ragUploadError"></div>
+                                <div class="success-message" id="ragUploadSuccess"></div>
+                                <button type="submit" class="btn btn-primary">Upload Documents</button>
+                            </form>
+                        </div>
+                        <div class="mb-3">
+                            <p>Test your RAG implementation</p>
+                            <form id="ragQueryForm">
+                                <textarea class="form-control mb-2" id="ragQuery" rows="3" required placeholder="Enter your query here..."></textarea>
+                                <div class="error-message" id="ragQueryError"></div>
+                                <div class="success-message" id="ragQuerySuccess"></div>
+                                <button type="submit" class="btn btn-primary">Test</button>
+                            </form>
+                            <div id="ragResult" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Hybrid Chat</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Start a hybrid chat session</p>
+                        <button class="btn btn-primary" onclick="startChat()">Start Chat</button>
+                        <div id="chatWindow" style="display: none;" class="mt-3">
+                            <div id="chatMessages" class="border rounded p-2 mb-2" style="height: 300px; overflow-y: auto;"></div>
+                            <form id="chatForm">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="chatInput" placeholder="Type your message...">
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <div class="password-field">
+                                <input type="password" class="form-control" id="loginPassword" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="error-message" id="loginError"></div>
+                        <div class="success-message" id="loginSuccess"></div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <hr>
+                    <p class="text-center mb-0">
+                        Don't have an account? 
+                        <button type="button" class="btn btn-link p-0" onclick="showRegisterModal()">Register</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Register</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <div class="password-field">
+                                <input type="password" class="form-control" id="registerPassword" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('registerPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="error-message" id="registerError"></div>
+                        <div class="success-message" id="registerSuccess"></div>
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Модальные окна Bootstrap
+        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+
+        // Функция для показа ошибки
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Скрываем сообщение об успехе, если оно показано
+            const successId = elementId.replace('Error', 'Success');
+            document.getElementById(successId).style.display = 'none';
+        }
+
+        // Функция для показа сообщения об успехе
+        function showSuccess(elementId, message) {
+            const successElement = document.getElementById(elementId);
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            
+            // Скрываем сообщение об ошибке, если оно показано
+            const errorId = elementId.replace('Success', 'Error');
+            document.getElementById(errorId).style.display = 'none';
+        }
+
+        // Переключение между модальными окнами
+        function showRegisterModal() {
+            loginModal.hide();
+            registerModal.show();
+        }
+
+        function showLoginModal() {
+            registerModal.hide();
+            loginModal.show();
+        }
+
+        // Обработка формы входа
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('loginSuccess', 'Login successful!');
+                    updateUIAfterLogin(email);
+                    setTimeout(() => {
+                        loginModal.hide();
+                    }, 1000);
+                } else {
+                    showError('loginError', data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('loginError', 'Network error. Please try again.');
+            }
+        });
+
+        // Обработка формы регистрации
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('registerSuccess', 'Registration successful! You can now login.');
+                    setTimeout(() => {
+                        registerModal.hide();
+                        loginModal.show();
+                    }, 2000);
+                } else {
+                    showError('registerError', data.error || 'Registration failed');
+                }
+            } catch (error) {
+                showError('registerError', 'Network error. Please try again.');
+            }
+        });
+
+        // Fine-tuning
+        document.getElementById('finetuneForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const files = document.getElementById('finetuneFiles').files;
+            if (files.length === 0) {
+                showError('finetuneError', 'Please select at least one file');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files[]', file);
+            }
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('finetuneSuccess', 'Files uploaded successfully!');
+                    document.getElementById('finetuneFiles').value = '';
+                } else {
+                    showError('finetuneError', data.error || 'Upload failed');
+                }
+            } catch (error) {
+                showError('finetuneError', 'Network error. Please try again.');
+            }
+        });
+
+        // Загрузка RAG документов
+        document.getElementById('ragUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const files = document.getElementById('ragFiles').files;
+            if (files.length === 0) {
+                showError('ragUploadError', 'Please select at least one file');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files[]', file);
+            }
+
+            try {
+                const response = await fetch('/upload_rag', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('ragUploadSuccess', 'Documents uploaded successfully!');
+                    document.getElementById('ragFiles').value = '';
+                } else {
+                    showError('ragUploadError', data.error || 'Upload failed');
+                }
+            } catch (error) {
+                showError('ragUploadError', 'Network error. Please try again.');
+            }
+        });
+
+        // RAG запрос
+        document.getElementById('ragQueryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = document.getElementById('ragQuery').value;
+            if (!query.trim()) {
+                showError('ragQueryError', 'Please enter a query');
+                return;
+            }
+
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('ragResult').innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Answer:</strong><br>
+                            ${data.answer}
+                            ${data.sources ? `<hr><strong>Sources:</strong><br>${data.sources.join('<br>')}` : ''}
+                        </div>
+                    `;
+                    showSuccess('ragQuerySuccess', 'Query processed successfully!');
+                } else {
+                    showError('ragQueryError', data.error || 'Query failed');
+                }
+            } catch (error) {
+                showError('ragQueryError', 'Network error. Please try again.');
+            }
+        });
+
+        // Chat functionality
+        let chatActive = false;
+
+        function startChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            if (!chatActive) {
+                chatWindow.style.display = 'block';
+                chatActive = true;
+                // Добавляем приветственное сообщение
+                addMessage('system', 'Welcome to Hybrid Chat! How can I help you today?');
+            }
+        }
+
+        function addMessage(role, content) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role} mb-2 p-2 ${role === 'user' ? 'text-end' : ''}`;
+            messageDiv.innerHTML = `
+                <div class="d-inline-block ${role === 'user' ? 'bg-primary text-white' : 'bg-light'} rounded p-2">
+                    ${content}
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Добавляем сообщение пользователя
+            addMessage('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Добавляем ответ ассистента
+                    addMessage('assistant', data.response);
+                } else {
+                    addMessage('system', 'Error: ' + (data.error || 'Failed to get response'));
+                }
+            } catch (error) {
+                addMessage('system', 'Network error. Please try again.');
+            }
+        });
+
+        // Функция для обновления UI после входа
+        function updateUIAfterLogin(username) {
+            document.getElementById('userStatus').style.display = 'inline';
+            document.getElementById('userName').textContent = username;
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline';
+        }
+
+        // Функция для выхода
+        async function logout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        // Проверяем статус входа при загрузке
+        async function checkLoginStatus() {
+            try {
+                const response = await fetch('/check_auth');
+                const data = await response.json();
+
+                if (response.ok && data.logged_in) {
+                    updateUIAfterLogin(data.username);
+                }
+            } catch (error) {
+                console.error('Failed to check auth status:', error);
+            }
+        }
+
+        // Проверяем статус при загрузке страницы
+        checkLoginStatus();
+
+        // Функция для переключения видимости пароля
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+    </script>
+</body>
+</html>
