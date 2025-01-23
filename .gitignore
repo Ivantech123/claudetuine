@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+
+# Environment
+.env
+venv/
+ENV/
+
+# Uploads and data
+uploads/
+rag_documents/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
