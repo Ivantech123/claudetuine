@@ -1,3 +1,121 @@
+# 🎯 Claude Tune
+
+<div align="center">
+
+![Claude Tune Banner](public/banner.png)
+
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude-7B61FF?style=for-the-badge)](https://www.anthropic.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Weights & Biases](https://img.shields.io/badge/Weights_&_Biases-FFBE00?style=for-the-badge&logo=weightsandbiases&logoColor=black)](https://wandb.ai/)
+
+[English](#english) | [Русский](#русский)
+
+</div>
+
+---
+
+<a name="english"></a>
+# 🇺🇸 English
+
+<div align="center">
+<img src="public/section-banners.png" alt="Features" width="600"/>
+</div>
+
+## 📋 About
+Claude Tune is a powerful platform for fine-tuning Claude AI models. It provides tools for dataset preparation, model training, and performance evaluation, making it easier to create specialized AI models for specific tasks.
+
+## ✨ Key Features
+- 🎯 Advanced model fine-tuning
+- 📊 Performance metrics tracking
+- 🔄 Continuous training
+- 📈 Learning rate optimization
+- 🎚️ Hyperparameter tuning
+
+<div align="center">
+<img src="public/features.gif" alt="Features Demo" width="600"/>
+</div>
+
+## 🛠️ Tech Stack
+- 🐍 Python 3.9+
+- 🤖 Claude AI API
+- 🔥 PyTorch
+- 📊 Weights & Biases
+- 🔄 Hugging Face Transformers
+
+## 🚀 Quick Start
+```bash
+# Clone repository
+git clone https://github.com/Ivantech123/claudetuine.git
+cd claudetuine
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment
+cp .env.example .env
+# Add your API keys to .env
+
+# Start training
+python train.py
+```
+
+---
+
+<a name="русский"></a>
+# 🇷🇺 Русский
+
+## 📋 О проекте
+Claude Tune - мощная платформа для тонкой настройки моделей Claude AI. Предоставляет инструменты для подготовки данных, обучения моделей и оценки производительности, упрощая создание специализированных AI моделей для конкретных задач.
+
+<div align="center">
+<img src="public/demo-ru.gif" alt="Демо" width="600"/>
+</div>
+
+## ✨ Возможности
+- 🎯 Продвинутая тонкая настройка моделей
+- 📊 Отслеживание метрик производительности
+- 🔄 Непрерывное обучение
+- 📈 Оптимизация скорости обучения
+- 🎚️ Настройка гиперпараметров
+
+## 🛠️ Технологии
+- 🐍 Python 3.9+
+- 🤖 Claude AI API
+- 🔥 PyTorch
+- 📊 Weights & Biases
+- 🔄 Hugging Face Transformers
+
+## 🚀 Быстрый старт
+```bash
+# Клонировать репозиторий
+git clone https://github.com/Ivantech123/claudetuine.git
+cd claudetuine
+
+# Установить зависимости
+pip install -r requirements.txt
+
+# Настроить окружение
+cp .env.example .env
+# Добавьте свои API ключи в .env
+
+# Начать обучение
+python train.py
+```
+
+## 📦 Структура проекта
+```
+src/
+├── training/     # Обучение моделей
+├── data/         # Подготовка данных
+├── metrics/      # Метрики и оценка
+├── models/       # Архитектуры моделей
+└── utils/        # Утилиты
+```
+
+## 📫 Контакты
+Email: abloko362@gmail.com
+
 # Claude Fine-tuning Project
 
 Проект для оптимизированного дообучения (fine-tuning) модели Claude от Anthropic с расширенной системой метрик и автоматической настройкой параметров.
